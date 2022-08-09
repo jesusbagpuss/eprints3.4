@@ -263,11 +263,12 @@ sub get_eprint_by_identifier
 	my $dataset = $repo->get_dataset( "eprint" );
 	my $searchexp = $dataset->prepare_search;
 
+	# Find any records that were once live.
+	# The logic in EPrints::OpenArchives will display non-live records as 'deleted' in the OAI interface
 	$searchexp->add_field(
-		$dataset->field( "eprint_status" ),
-		"archive deletion",
-		"EQ",
-		"ANY"
+		$dataset->field( "datestamp" ),
+		undef, # normally a value. We don't want to set an actual value, we just need to see if it's set or not...
+		"SET", # so we use this as the 'match' 
 	);
 
 	$searchexp->add_field(
@@ -775,11 +776,11 @@ sub _list
 	my $filters = $repo->config( "oai", "filters" );
 	$filters = [] unless defined $filters;
 
+	# we're interested in any eprints that have been live at some point.
+	# The logic in EPrints::OpenArchives will show non-live items as 'deleted' (in OAI-PMH terms)
 	push @$filters, {
-		meta_fields => [qw( eprint_status )],
-		value => "archive deletion",
-		match => "EQ",
-		merge => "ANY",
+		meta_fields => [qw( datestamp )],
+		match => "SET",
 	};
 
 	# custom sets
