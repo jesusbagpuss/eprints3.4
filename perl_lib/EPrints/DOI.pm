@@ -227,6 +227,8 @@ sub _stringify
 
 #
 # Returns a percent-encoded "dir.reg/dss" string.
+# According to https://www.doi.org/doi-handbook/HTML/encoding-rules-for-urls.html
+# forward slashes only need to be escaped when part of a '/./' or '/../' sequence.
 #
 sub _uri_path
 {
@@ -235,7 +237,9 @@ sub _uri_path
 		. '.'
 		. uri_escape_utf8( $self->{reg} )
 		. '/'
-		. uri_escape_utf8( $self->{dss} );
+		. uri_escape_utf8( $self->{dss}, "^A-Za-z0-9\-\._~\/" ) =~ s{(/\.\.?)/}{$1\%2F}gr;
+		# Regex r modifier: perform non-destructive substitution and return the new value
+
 }
 
 #
