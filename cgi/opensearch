@@ -23,9 +23,9 @@ if( defined $search_id || ! grep{ $_->{id} eq 'q' } @$search_confs )
 # If we are defining our own search field to use, or if there isn't a 'q' search field
 if( defined $search_id || ! grep{ $_->{id} eq 'q' } @$search_confs )
 {
-        $search_id = @$search_confs[0]->{id} if !defined $search_id;
-		# map the incoming 'q' param to the search_field param
-        $repo->{query}->param( $search_id, $q ) if defined $q && ! defined $repo->param( $search_id );
+	$search_id = @$search_confs[0]->{id} if !defined $search_id;
+	# map the incoming 'q' param to the search_field param
+	$repo->{query}->param( $search_id, $q ) if defined $q && ! defined $repo->param( $search_id );
 }
 
 my $startPage = $repo->param( 'startPage' );
@@ -183,9 +183,9 @@ if( $list->count == $pageSize )
 	else
 	{
 		$offsets{next}->query_form(
-            $base_url->query_form,
-            startIndex => $startIndex + $pageSize,
-        );
+			$base_url->query_form,
+			startIndex => $startIndex + $pageSize,
+		);
 	}
 }
 }
