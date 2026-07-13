@@ -12,12 +12,11 @@ my $q = $repo->param( 'q' );
 my $search_confs = $repo->config( "search", "simple", "search_fields" );
 my $search_id = $repo->config( "opensearch", "simple_search_id" );
 
-# If we are defining our own search field to use, or if there isn't a 'q' search field
-if( defined $search_id || ! grep{ $_->{id} eq 'q' } @$search_confs )
+# If custom config is in use, check the search config exists. This aborts rather than falls back to 
+# a different field, as the custom config would have been added at some point specifically.
+if( defined $search_id && ! grep{ $_->{id} eq $search_id } @$search_confs )
 {
-	$search_id = @$search_confs[0]->{id} if !defined $search_id;
-	# map the incoming 'q' param to the search_field param
-	$repo->{query}->param( $search_id, $q ) if defined $q && ! defined $repo->param( $search_id );
+	EPrints->abort( "Simple search field config for $search_id not found." );
 }
 
 # If we are defining our own search field to use, or if there isn't a 'q' search field
