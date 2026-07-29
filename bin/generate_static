@@ -230,9 +230,6 @@ foreach my $langid ( @{$session->config( "languages" )} )
 	foreach my $e_file ( keys %{$existing_files} )
 	{
 		next if defined( $wrote_files->{$e_file} );
-		next if( $e_file =~ m/^$base_target_dir\/view\// );
-		next if( $e_file =~ m/^$base_target_dir\/view_tmp/ );
-		next if( $e_file =~ m/^$base_target_dir\/archive\// );
 		if( $prune )
 		{
 			print "removing $e_file\n" if( $noise >= 1);
@@ -279,6 +276,10 @@ exit;
 sub scan_dir
 {
 	my( $dir, $map ) = @_;
+
+    return if $dir =~ m{/archive(?:/|$)};
+    return if $dir =~ m{/view(?:/|$)};
+    return if $dir =~ m{/view_tmp(?:/|$)};
 
 	my $dh;
 	my @dirs = ();
