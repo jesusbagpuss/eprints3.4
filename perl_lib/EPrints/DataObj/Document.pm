@@ -2528,7 +2528,7 @@ sub search_related
 				match => "EX",
 			},{
 				meta_fields => [qw( eprintid )],
-				value => $self->parent->id,
+				value => $self->get_parent_id,
 			}],
 			custom_order => $order,
 			limit => $limit,
@@ -2543,7 +2543,7 @@ sub search_related
 				match => "EX",
 			},{
 				meta_fields => [qw( eprintid )],
-				value => $self->parent->id,
+				value => $self->get_parent_id,
 			}],
 			custom_order => $order,
 			limit => $limit,
