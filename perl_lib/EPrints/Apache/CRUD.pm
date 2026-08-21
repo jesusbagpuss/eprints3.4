@@ -1804,6 +1804,12 @@ sub POST
 	}
 	else
 	{
+		if (!defined $items[0]){
+			return  $self->sword_error(
+				status => HTTP_BAD_REQUEST,
+				summary => "Import plugin didn't create anything.  Check ".$repo->config( 'perl_url' )."/schema to ensure the metadata being sent is valid.",
+			);
+		}
 		$r->err_headers_out->{Location} = $items[0]->uri;
 # DEBUG CODE
 if( defined $field && $headers->{mime_type} ne "application/atom+xml" )
