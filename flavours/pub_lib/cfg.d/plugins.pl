@@ -65,7 +65,6 @@ $c->{plugins}->{"Import::DOI"}->{params}->{pid} = "ourl_eprintsorg:eprintsorg";
 # own repository requirements
 $c->{plugins}->{"Import::DOI"}->{params}->{doi_field} = "id_number";
 $c->{plugins}->{"Import::DOI"}->{params}->{use_prefix} = 1;
-$c->{plugins}->{"Import::DOI_UNIXREF"}->{params} = $c->{plugins}->{"Import::DOI"}->{params};
 
 
 =head1 COPYRIGHT

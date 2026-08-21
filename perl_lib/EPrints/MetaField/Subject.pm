@@ -467,13 +467,14 @@ sub get_property_defaults
 {
 	my( $self ) = @_;
 	my %defaults = $self->SUPER::get_property_defaults;
-	$defaults{search_input_style} = "default"; # "checkbox"
-	$defaults{input_style} = 0;
-	$defaults{showall} = 0;
-	$defaults{showtop} = 0;
-	$defaults{nestids} = 1;
-	$defaults{top} = "subjects";
+	$defaults{expanded_subjects} = [];
+	$defaults{nestids} = $EPrints::MetaField::TRUE;
 	$defaults{options} = $EPrints::MetaField::UNDEF;
+	$defaults{render_path} = $EPrints::MetaField::TRUE;
+	$defaults{search_input_style} = "default"; # "checkbox"
+	$defaults{showall} = $EPrints::MetaField::FALSE;
+	$defaults{showtop} = $EPrints::MetaField::FALSE;
+	$defaults{top} = "subjects";
 	return %defaults;
 }
 
@@ -481,10 +482,14 @@ sub get_values
 {
 	my( $self, $session, $dataset, %opts ) = @_;
 
+	my $showall = defined $opts{showall} ? $opts{showall} : 0;
+	my $showtop = defined $opts{showtop} ? $opts{showtop} : 1;
+
 	my $topsubj = $self->get_top_subject( $session );
+
 	my ( $pairs ) = $topsubj->get_subjects(
-		0,
-		1,
+		!$showall,
+		$showtop,
 		0 );
 	my @outvalues;
 	my $seen = {};
@@ -501,7 +506,12 @@ sub tags
 {
 	my( $self, $session ) = @_;
 
-	return @{$self->get_values( $session )};
+	my %opts = (
+		showtop => $self->{showtop},
+		showall => $self->{showall},
+	);
+
+	return @{$self->get_values( $session, undef, %opts )};
 }
 
 ######################################################################

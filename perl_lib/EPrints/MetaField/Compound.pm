@@ -129,7 +129,7 @@ sub render_value_actual
 			my $fieldname = $field_conf->{name};
 			(my $subfieldname = $fieldname) =~ s/^$self->{name}_//;
 			if (
-				   ( $self->get_property( "multiple" ) && exists @{$value}[0]->{$subfieldname} )
+				   ( $self->get_property( "multiple" ) && EPrints::Utils::is_set( @{$value}[0] ) && exists @{$value}[0]->{$subfieldname} )
 				|| ( !$self->get_property( "multiple" ) && exists $value->{$subfieldname} )
 				|| !$field_conf->{render_column_quiet}
 			)
@@ -575,10 +575,21 @@ sub validate
 
 	my $f = $self->get_property( "fields_cache" );
 	my @problems;
+
+	# This will validate the individual sub-fields e.g. creators_name, creators_id, creators_orcid.
 	foreach my $field_conf ( @{$f} )
 	{
 		push @problems, $object->validate_field( $field_conf->{name} );
 	}
+
+	# This can validate the compound field as a whole - e.g. for a creator, does a 'row' that has an ORCID defined also have a name defined
+	$self->{repository}->run_trigger( EPrints::Const::EP_TRIGGER_VALIDATE_FIELD(),
+		field => $self,
+		dataobj => $object,
+		value => $value,
+		problems => \@problems,
+	);
+
 	return @problems;
 }
 
@@ -600,9 +611,10 @@ sub get_property_defaults
 {
 	my( $self ) = @_;
 	my %defaults = $self->SUPER::get_property_defaults;
+	$defaults{as_list} = $EPrints::MetaField::FALSE;
 	$defaults{fields} = $EPrints::MetaField::REQUIRED;
 	$defaults{fields_cache} = $EPrints::MetaField::REQUIRED;
-	$defaults{show_in_fieldlist} = 0;
+	$defaults{show_in_fieldlist} = $EPrints::MetaField::FALSE;
 	return %defaults;
 }
 

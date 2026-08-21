@@ -372,7 +372,7 @@ sub get_defaults
 		$data->{pos} = $session->get_database->next_doc_pos( $data->{eprintid} );
 	}
 
-	$data->{placement} = $data->{pos};
+	$data->{placement} = $session->get_database->next_doc_pos( $data->{eprintid}, 'placement' );
 
 	return $data;
 }
@@ -1974,13 +1974,13 @@ sub render_icon_link
 	}
 	my $f = $self->{session}->make_doc_fragment;
 	my $img_class = ( $opts{size} ) ? 'ep_doc_icon ep_doc_icon_'.$opts{size} : "ep_doc_icon";
-	my $img_alt = $self->value('main');
+	my $img_alt = $self->value('main') ? $self->value('main') : '';
 	$img_alt = $self->value('formatdesc') if EPrints::Utils::is_set( $self->value('formatdesc') );
 	my $img = $self->{session}->make_element(
 		"img",
 		class=>$img_class,
 		alt=>"[thumbnail of $img_alt]",
-  		title=>"$img_alt",
+		title=>$img_alt,
 		src=>$self->icon_url( public=>$opts{public}, size=>$opts{size} ),
 		border=>0 );
 	if ( $opts{with_link} )
@@ -2528,7 +2528,7 @@ sub search_related
 				match => "EX",
 			},{
 				meta_fields => [qw( eprintid )],
-				value => $self->parent->id,
+				value => $self->get_parent_id,
 			}],
 			custom_order => $order,
 			limit => $limit,
@@ -2543,7 +2543,7 @@ sub search_related
 				match => "EX",
 			},{
 				meta_fields => [qw( eprintid )],
-				value => $self->parent->id,
+				value => $self->get_parent_id,
 			}],
 			custom_order => $order,
 			limit => $limit,

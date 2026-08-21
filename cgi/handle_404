@@ -53,25 +53,29 @@ if( defined($show) and !$show )
 
 if( $url =~ m#^/(\d+)/#  || $url =~ m#^/id/eprint/(\d+)/# )
 {
-	my $eprint = $session->dataset( "eprint" )->dataobj( $1 );
-	my $eprint_message;
-	if( defined $eprint )
+	if ( $session->get_database->exists( $session->dataset( "eprint" ), $1 ) )
 	{
-		my $status = $eprint->get_value( "eprint_status" );
-		if( defined $status && $status eq "archive" ){
-			$eprint_message = $session->html_phrase(
-				"cgi/handle_http_error:404_blurb:archive_eprint",
-				citation => $eprint->render_citation_link,
-			);
-		} elsif( defined $status && $status eq "deletion" ){
-			# reuse logic used to deal with tombstone pages - linking to more recent versions
-			# if available. 
-			# render returns: $dom, $title, $links, $template
-			( $eprint_message, undef, undef, undef ) = $eprint->render;
+		my $eprint = $session->dataset( "eprint" )->dataobj( $1 );
+		my $eprint_message;
+		if( defined $eprint )
+		{
+			my $status = $eprint->get_value( "eprint_status" );
+			if( defined $status && $status eq "archive" ){
+				$eprint_message = $session->html_phrase(
+					"cgi/handle_http_error:404_blurb:archive_eprint",
+					citation => $eprint->render_citation_link,
+				);
+			} elsif( defined $status && $status eq "deletion" ){
+				# reuse logic used to deal with tombstone pages - linking to more recent versions
+				# if available. 
+				# render returns: $dom, $title, $links, $template
+				( $eprint_message, undef, undef, undef ) = $eprint->render;
+			}
 		}
+		&plain_404( $session, $eprint_message );
+	} else {
+		&plain_404( $session );
 	}
-
-	&plain_404( $session, $eprint_message );
 } else {
         &plain_404( $session );
 }

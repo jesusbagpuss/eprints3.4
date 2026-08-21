@@ -407,11 +407,19 @@ sub update_view_menu
 	my $menu_fields = $menus_fields->[$menu_level];
 	my $menu = $view->{menus}->[$menu_level];
 
-	# get the list of unique value-counts for this menu level
+	# exact = 0, for subject fields, will show items which are affiliated to that subject's children
+	my $has_subject_menu = 0;
+	foreach my $mf  ( @$menus_fields )
+	{
+		$has_subject_menu = 1 if $mf->[0]->isa( 'EPrints::MetaField::Subject' );
+	}
+	my $exact = !($has_subject_menu && $view->{show_children});
+
+	# get the list of unique value-counts for this menu level and descendants if $exact is false
 	my $sizes = $view->fieldlist_sizes(
 		$path_values,
 		$menu_level,
-		$view->get_filters( $path_values, 1 ) # EXact matches only
+		$view->get_filters( $path_values, $exact )
 	);
 
 	my $nav_sizes = $sizes;
@@ -551,11 +559,16 @@ sub update_view_list
 	# construct the export and navigation bars, which are common to all "alt_views"
 	my $menu_fields = $menus_fields->[$#$path_values];
 
-	# exact = 0, for subject fields, will show items which are affiliated to that subject's children        
-	my $exact = !($menu_fields->[0]->isa( 'EPrints::MetaField::Subject' ) && $view->{show_children});
+	# exact = 0, for subject fields, will show items which are affiliated to that subject's children
+	my $has_subject_menu = 0;
+	foreach my $mf  ( @$menus_fields )
+	{
+		$has_subject_menu = 1 if $mf->[0]->isa( 'EPrints::MetaField::Subject' );
+	}
+	my $exact = !($has_subject_menu && $view->{show_children});
 
-	# get all of the items for this level
-	my $filters = $view->get_filters( $path_values, $exact ); # EXact
+	# get all of the items for this level and descendants if $exact is false
+	my $filters = $view->get_filters( $path_values, $exact );
 
 	my $ds = $view->dataset;
 
@@ -718,28 +731,28 @@ sub update_view_list
 		my $INCLUDE = $files{"$page_file_name.include"} = $xml->create_document_fragment;
 
 		if( defined $view->{title_link} )
-                {
-                        my $title_link = $repo->call( $view->{title_link},
-                                                $repo,
-                                                $view,
-                                                $path_values,   ##???
-                                                $page_file_name
-                        );
-                        $PAGE->appendChild( $title_link ) if( defined $title_link );
-                }
+		{
+			my $title_link = $repo->call( $view->{title_link},
+				$repo,
+				$view,
+				$path_values,   ##???
+				$page_file_name
+			);
+			$PAGE->appendChild( $title_link ) if( defined $title_link );
+		}
 
 		my $custom_intro = undef;
-                if( $repo->can_call( 'get_custom_view_header' ) )
-                {
-                        #derive the path to send to the custom header
-                        my $path = join('', map { "/$_" } $view->escape_path_values( @$path_values ));
-                        $custom_intro = $repo->call('get_custom_view_header', $repo, $xml, $view->{id}, $path);
-                }
+		if( $repo->can_call( 'get_custom_view_header' ) )
+		{
+			# Derive the path to send to the custom header
+			my $path = join('', map { "/$_" } $view->escape_path_values( @$path_values ));
+			$custom_intro = $repo->call('get_custom_view_header', $repo, $xml, $view->{id}, $path);
+		}
 
-		if( defined $custom_intro && $repo->config( 'get_custom_view_header_location' ) eq "before_nav" )
-                {
-                        $PAGE->appendChild( $custom_intro );
-                }
+		if( defined $custom_intro && $repo->config( 'get_custom_view_header_location' ) && $repo->config( 'get_custom_view_header_location' ) eq "before_nav" )
+		{
+			$PAGE->appendChild( $custom_intro );
+		}
 
 		$PAGE->appendChild( $xml->clone( $navigation_aids ) );
 		
@@ -751,9 +764,9 @@ sub update_view_list
 		) );
 
 		if( defined $custom_intro && ( ! $repo->config( 'get_custom_view_header_location' ) || $repo->config( 'get_custom_view_header_location' ) eq "after_nav" ) )
-                {
-                        $PAGE->appendChild( $custom_intro );
-                }
+		{
+			$PAGE->appendChild( $custom_intro );
+		}
 
 		# Render links to alternate groupings
 		if( scalar @{$alt_views} > 1 && $count )
@@ -2245,6 +2258,11 @@ sub get_filters
 		if( !EPrints::Utils::is_set( $path_values->[$i] ) || $i < $#$path_values || $exact )
 		{
 			$filter->{match} = "EX";
+			# Unset the filter match type if the menu field at the current level is of type subject and show_children has been set to 1 for the browse view
+			if ( !$exact && EPrints::Utils::is_set( $menus_fields->[$i]->[0] ) && ref( $menus_fields->[$i]->[0] ) eq "EPrints::MetaField::Subject" )
+			{
+				delete $filter->{match};
+			}
 		}
 		push @$filters, $filter;
 	}
